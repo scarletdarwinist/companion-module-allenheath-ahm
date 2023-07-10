@@ -1,191 +1,12 @@
-/**
- *
- * Companion instance class for the A&H dLive & iLive Mixers.
- * @version 1.3.4
- *
- */
+const { InstanceBase, Regex, runEntrypoint } = require('@companion-module/base')
 
-let tcp = require('../../tcp')
-let instance_skel = require('../../instance_skel')
-let actions = require('./actions')
-let feedbacks = require('./feedbacks')
-let presets = require('./presets')
-const MIDI_PORT = 51325
+class AHMInstance extends InstanceBase {
 
-/**
- * @extends instance_skel
- * @since 1.0.0
- * @author Jeffrey Davidsz
- */
-
-class instance extends instance_skel {
-	/**
-	 * Create an instance.
-	 *
-	 * @param {EventEmitter} system - the brains of the operation
-	 * @param {string} id - the instance ID
-	 * @param {Object} config - saved user configuration parameters
-	 * @since 1.2.0
-	 */
-	constructor(system, id, config) {
-		super(system, id, config)
-
-		Object.assign(this, {
-			...actions,
-			...feedbacks,
-			...presets,
-		})
-
-		this.numberOfInputs = 64
-		let numberOfZones = 64
-		this.counter = 0
-		this.inputsMute = this.createArray(this.numberOfInputs)
-		this.inputsToZonesMute = this.createArray(this.numberOfInputs, numberOfZones)
-		this.zonesMute = this.createArray(numberOfZones)
+	constructor(internal) {
+		super(internal)
 	}
 
-	sleep(ms) {
-		return new Promise((resolve) => setTimeout(resolve, ms))
-	}
-
-	async getMuteInfoFromDevice(length) {
-		for (let index = 0; index < length; index++) {
-			this.getMuteInfo(0, index) // inputs
-			await this.sleep(150)
-			this.getMuteInfo(1, index) // zones
-			await this.sleep(150)
-		}
-		// this.getMuteInfo(channel, 11)
-	}
-
-	getMuteInfo(channel, number) {
-		let cmd = { buffers: [] }
-		cmd.buffers = [
-			Buffer.from([
-				0xf0,
-				0x00,
-				0x00,
-				0x1a,
-				0x50,
-				0x12,
-				0x01,
-				0x00,
-				parseInt(channel),
-				0x01,
-				0x09,
-				parseInt(number),
-				0xf7,
-			]),
-		]
-		for (let i = 0; i < cmd.buffers.length; i++) {
-			if (this.midiSocket !== undefined) {
-				this.midiSocket.write(cmd.buffers[i])
-			}
-		}
-	}
-
-	createArray(size, extraArrayLength) {
-		let array = new Array(size)
-		for (let index = 0; index < array.length; index++) {
-			if (extraArrayLength) {
-				array[index] = []
-			} else {
-				array[index] = 0
-			}
-		}
-		return array
-	}
-	/**
-	 * Setup the actions.
-	 *
-	 * @param {EventEmitter} system - the brains of the operation
-	 * @access public
-	 * @since 1.2.0
-	 */
-	actions(system) {
-		this.setActions(this.getActions())
-	}
-
-	/**
-	 * Executes the provided action.
-	 *
-	 * @param {Object} action - the action to be executed
-	 * @access public
-	 * @since 1.2.0
-	 */
-	action(action) {
-		let opt = action.options
-		let channel = parseInt(opt.inputChannel)
-		let presetNumber = parseInt(opt.number)
-		let zoneNumber = parseInt(opt.number)
-
-		let cmd = { buffers: [] }
-
-		switch (action.action) {
-			case 'scene_recall':
-				cmd.buffers = [
-					Buffer.from([
-						0xb0,
-						0x00,
-						presetNumber < 128 ? 0x00 : presetNumber < 256 ? 0x01 : presetNumber < 384 ? 0x02 : 0x03,
-						0xc0,
-						presetNumber,
-					]),
-				]
-				break
-			case 'mute_input':
-				cmd.buffers = [Buffer.from([0x90, channel, opt.mute ? 0x7f : 0x3f, 0x90, channel, 0])]
-				this.inputsMute[channel] = opt.mute ? 1 : 0
-				this.checkFeedbacks('inputMute')
-				break
-			case 'mute_zone':
-				cmd.buffers = [Buffer.from([0x91, channel, opt.mute ? 0x7f : 0x3f, 0x91, channel, 0])]
-				this.zonesMute[channel] = opt.mute ? 1 : 0
-				this.checkFeedbacks('zoneMute')
-				break
-			case 'input_to_zone':
-				cmd.buffers = [
-					Buffer.from([
-						0xf0,
-						0x00,
-						0x00,
-						0x1a,
-						0x50,
-						0x12,
-						0x01,
-						0x00,
-						0x00,
-						0x03,
-						channel,
-						0x01,
-						zoneNumber,
-						opt.mute ? 0x7f : 0x3f,
-						0xf7,
-					]),
-				]
-				this.inputsToZonesMute[channel][zoneNumber] = opt.mute ? 1 : 0
-				this.checkFeedbacks('inputToZoneMute')
-				break
-			case 'get_phantom':
-				cmd.buffers = [
-					Buffer.from([0xf0, 0x00, 0x00, 0x1a, 0x50, 0x12, 0x01, 0x00, 0x00, 0x01, 0x0b, 0x1b, channel, 0xf7]),
-				]
-				break
-			case 'get_muteInfo':
-				cmd.buffers = [Buffer.from([0xf0, 0x00, 0x00, 0x1a, 0x50, 0x12, 0x01, 0x00, 0x00, 0x01, 0x09, channel, 0xf7])]
-				break
-		}
-
-		if (cmd.buffers.length != 0) {
-			for (let i = 0; i < cmd.buffers.length; i++) {
-				if (this.midiSocket !== undefined) {
-					this.log('debug', `sending ${cmd.buffers[i].toString('hex')} via MIDI TCP @${this.config.host}`)
-					this.midiSocket.write(cmd.buffers[i])
-				}
-			}
-		}
-	}
-
+	
 	/**
 	 * Creates the configuration fields for web config.
 	 *
@@ -193,10 +14,10 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.2.0
 	 */
-	config_fields() {
+	getConfigFields() {
 		return [
 			{
-				type: 'text',
+				type: 'static-text',
 				id: 'info',
 				width: 12,
 				label: 'Information',
@@ -234,13 +55,12 @@ class instance extends instance_skel {
 	 * @access public
 	 * @since 1.2.0
 	 */
-	init() {
-		this.updateConfig(this.config)
-		this.initFeedbacks()
-		this.initPresets()
+	async init(config) {
+
+		this.updateStatus('ok')
 	}
 
-	initFeedbacks() {
+	/*initFeedbacks() {
 		this.setFeedbackDefinitions(this.getFeedbacks(this.inputsMute, this.zonesMute, this.inputsToZonesMute))
 	}
 
@@ -253,7 +73,7 @@ class instance extends instance_skel {
 	 *
 	 * @access protected
 	 * @since 1.2.0
-	 */
+	 
 	init_tcp() {
 		if (this.midiSocket !== undefined) {
 			this.midiSocket.destroy()
@@ -288,7 +108,7 @@ class instance extends instance_skel {
 	 * @param {Object} config - the new configuration
 	 * @access public
 	 * @since 1.2.0
-	 */
+	 
 	updateConfig(config) {
 		this.config = config
 
@@ -305,7 +125,7 @@ class instance extends instance_skel {
 	 * @param {Object} data - the incoming data
 	 * @access public
 	 * @since 1.2.0
-	 */
+	 
 	processIncomingData(data) {
 		console.log(data)
 
@@ -345,6 +165,5 @@ class instance extends instance_skel {
 				console.log('Extra data coming in')
 				break
 		}
-	}
+	}*/
 }
-exports = module.exports = instance

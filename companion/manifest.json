@@ -1,0 +1,26 @@
+{
+	"id": "allenheath-ahm",
+	"name": "allenheath-ahm",
+	"shortname": "ahm",
+	"description": "Module to control Allen & Heath AHM mixers",
+	"version": "0.1.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-allenheath-ahm.git",
+	"bugs": "https://github.com/bitfocus/companion-module-allenheath-ahm/issues",
+	"maintainers": [
+		{
+			"name": "Simon Ogdon",
+			"email": "simon.ogdon@gmail.com"
+		}
+	],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../main.js"
+	},
+	"legacyIds": [],
+	"manufacturer": "Allen & Heath",
+	"products": ["AHM64","AHM32"],
+	"keywords": []
+}

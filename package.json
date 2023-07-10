@@ -1,30 +1,20 @@
 {
-	"name": "allenheath-ahm",
-	"legacy": ["allenheath-ahm"],
-	"version": "1.0.2",
-	"api_version": "1.0.0",
-	"keywords": [
-		"Audio",
-		"Sound"
-	],
-	"manufacturer": "Allen & Heath",
-	"product": [
-		"AHM"
-	],
-	"shortname": "AHM",
-	"description": "Allen & Heath AHM module for Companion",
-	"main": "index.js",
+	"name": "your-module-name",
+	"version": "0.1.0",
+	"main": "main.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"format": "prettier -w ."
 	},
-	"author": "Jeffrey Davidsz <jeffrey.davidsz@vicreo.eu>",
 	"license": "MIT",
-	"homepage": "https://github.com/bitfocus/companion-module-allenheath-ahm#readme",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-allenheath-ahm/issues"
-	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-allenheath-ahm.git"
-	}
+		"url": "git+https://github.com/bitfocus/companion-module-your-module-name.git"
+	},
+	"dependencies": {
+		"@companion-module/base": "~1.4.0"
+	},
+	"devDependencies": {
+		"@companion-module/tools": "^1.2.0"
+	},
+	"prettier": "@companion-module/tools/.prettierrc.json"
 }

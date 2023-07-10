@@ -1,116 +1,33 @@
-module.exports = {
+const { combineRgb } = require('@companion-module/base')
 
-	getFeedbacks(inputsMute, zonesMute, inputsToZonesMute) {
-		var feedbacks = {};
-
-		feedbacks['inputMute'] = {
-			label: 'Change background when input on mute',
-			description: 'When you mute the input change color',
+module.exports = async function (self) {
+	self.setFeedbackDefinitions({
+		ChannelState: {
+			name: 'Example Feedback',
+			type: 'boolean',
+			label: 'Channel State',
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(0, 0, 0),
+			},
 			options: [
 				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: this.rgb(255, 255, 255)
-
+					id: 'num',
+					type: 'number',
+					label: 'Test',
+					default: 5,
+					min: 0,
+					max: 10,
 				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: this.rgb(255, 0, 0)
-				},
-				{
-					type: 'textinput',
-					label: 'Select input',
-					id: 'input',
-					default: 1
-				}
 			],
-			callback: (feedback, bank) => {
-				if (inputsMute[parseInt(feedback.options.input)-1] == 1) {
-					return {
-						color: feedback.options.fg,
-						bgcolor: feedback.options.bg
-					};
+			callback: (feedback) => {
+				console.log('Hello world!', feedback.options.num)
+				if (feedback.options.num > 5) {
+					return true
+				} else {
+					return false
 				}
-			}
-		};
-
-		feedbacks['zoneMute'] = {
-			label: 'Change background when zone on mute',
-			description: 'When you mute the zone change color',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: this.rgb(255, 255, 255)
-
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: this.rgb(255, 0, 0)
-				},
-				{
-					type: 'textinput',
-					label: 'Select zone',
-					id: 'zone',
-					default: 1
-				}
-			],
-			callback: (feedback, bank) => {
-				if (zonesMute[parseInt(feedback.options.zone)-1] == 1) {
-					return {
-						color: feedback.options.fg,
-						bgcolor: feedback.options.bg
-					};
-				}
-			}
-		};
-
-		feedbacks['inputToZoneMute'] = {
-			label: 'Change background when input to zone on mute',
-			description: 'When you mute the input on a zone change color',
-			options: [
-				{
-					type: 'colorpicker',
-					label: 'Foreground color',
-					id: 'fg',
-					default: this.rgb(255, 255, 255)
-
-				},
-				{
-					type: 'colorpicker',
-					label: 'Background color',
-					id: 'bg',
-					default: this.rgb(255, 0, 0)
-				},
-				{
-					type: 'textinput',
-					label: 'Select input',
-					id: 'input',
-					default: 1
-				},
-				{
-					type: 'textinput',
-					label: 'Select zone',
-					id: 'zone',
-					default: 1
-				}
-			],
-			callback: (feedback, bank) => {
-				if (inputsToZonesMute[parseInt(feedback.options.input)-1][parseInt(feedback.options.zone)-1] == 1) {
-					return {
-						color: feedback.options.fg,
-						bgcolor: feedback.options.bg
-					};
-				}
-			}
-		};
-
-		return feedbacks;
-	}
+			},
+		},
+	})
 }
